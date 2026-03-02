@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: 'MiPIT Dashboards'
+    orgId: 1
+    folder: 'MiPIT PoC'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

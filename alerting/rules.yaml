@@ -1,0 +1,26 @@
+groups:
+  - name: mipit-alerts
+    rules:
+      - alert: HighErrorRate
+        expr: sum(rate(mipit_payments_total{status=~"FAILED|REJECTED"}[5m])) / sum(rate(mipit_payments_total[5m])) > 0.01
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Error rate superior al 1%"
+
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, sum(rate(mipit_payment_latency_ms_bucket[5m])) by (le)) > 2000
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Latencia p95 superior a 2 segundos"
+
+      - alert: RabbitMQQueueBacklog
+        expr: rabbitmq_queue_messages > 100
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cola RabbitMQ con más de 100 mensajes pendientes"
