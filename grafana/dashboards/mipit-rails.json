@@ -190,6 +190,230 @@
             }
           }
         ]
+      },
+      {
+        "id": 5,
+        "title": "Bre-B — Tasa de Éxito vs Rechazo (COP)",
+        "type": "bargauge",
+        "gridPos": { "h": 7, "w": 12, "x": 0, "y": 22 },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "targets": [
+          {
+            "expr": "sum(mipit_adapter_requests_total{rail=\"BRE_B\", status=\"SUCCESS\"}) / sum(mipit_adapter_requests_total{rail=\"BRE_B\"}) * 100",
+            "legendFormat": "Tasa de Éxito Bre-B (%)",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(mipit_adapter_requests_total{rail=\"BRE_B\", status=\"REJECTED\"}) / sum(mipit_adapter_requests_total{rail=\"BRE_B\"}) * 100",
+            "legendFormat": "Tasa de Rechazo Bre-B (%)",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "max": 100,
+            "min": 0,
+            "unit": "percent",
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "red" },
+                { "value": 90, "color": "yellow" },
+                { "value": 98, "color": "green" }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "fields": "",
+            "values": false
+          },
+          "orientation": "horizontal",
+          "displayMode": "gradient",
+          "showUnfilled": true
+        }
+      },
+      {
+        "id": 6,
+        "title": "Bre-B — Latencia de Respuesta (ms)",
+        "type": "timeseries",
+        "gridPos": { "h": 7, "w": 12, "x": 12, "y": 22 },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, sum(rate(mipit_adapter_latency_ms_bucket{rail=\"BRE_B\"}[5m])) by (le))",
+            "legendFormat": "p50 Bre-B",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(mipit_adapter_latency_ms_bucket{rail=\"BRE_B\"}[5m])) by (le))",
+            "legendFormat": "p95 Bre-B",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(mipit_adapter_latency_ms_bucket{rail=\"BRE_B\"}[5m])) by (le))",
+            "legendFormat": "p99 Bre-B",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ms",
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 15,
+              "drawStyle": "line",
+              "gradientMode": "none",
+              "showPoints": "auto"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 500, "color": "yellow" },
+                { "value": 2000, "color": "red" }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "options": {
+          "tooltip": { "mode": "multi", "sort": "desc" },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "Bre-B — Códigos de Error BanRep (BREB001–005)",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "targets": [
+          {
+            "expr": "sum by (error)(mipit_adapter_errors_total{rail=\"BRE_B\"})",
+            "legendFormat": "{{error}}",
+            "refId": "A",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": { "mode": "thresholds" },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": null, "color": "green" },
+                { "value": 3, "color": "yellow" },
+                { "value": 15, "color": "red" }
+              ]
+            },
+            "custom": {
+              "align": "auto",
+              "displayMode": "color-background-solid"
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "error" },
+              "properties": [
+                { "id": "displayName", "value": "Código BanRep" },
+                { "id": "custom.width", "value": 180 }
+              ]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Value" },
+              "properties": [
+                { "id": "displayName", "value": "Ocurrencias" }
+              ]
+            }
+          ]
+        },
+        "options": {
+          "showHeader": true,
+          "sortBy": [{ "displayName": "Ocurrencias", "desc": true }],
+          "footer": { "show": false }
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "renameByName": {
+                "error": "Código BanRep",
+                "Value": "Ocurrencias"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Bre-B — Volumen de Pagos COP (rate/5m)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 29 },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "targets": [
+          {
+            "expr": "sum(rate(mipit_adapter_requests_total{rail=\"BRE_B\", status=\"SUCCESS\"}[5m]))",
+            "legendFormat": "Exitosos",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(rate(mipit_adapter_requests_total{rail=\"BRE_B\", status=\"REJECTED\"}[5m]))",
+            "legendFormat": "Rechazados",
+            "refId": "B"
+          },
+          {
+            "expr": "sum(rate(mipit_adapter_requests_total{rail=\"BRE_B\", status=\"ERROR\"}[5m]))",
+            "legendFormat": "Error",
+            "refId": "C"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops",
+            "color": { "mode": "palette-classic" },
+            "custom": {
+              "lineWidth": 2,
+              "fillOpacity": 20,
+              "drawStyle": "bars",
+              "gradientMode": "none",
+              "showPoints": "auto",
+              "barAlignment": 0
+            }
+          },
+          "overrides": [
+            {
+              "matcher": { "id": "byName", "options": "Exitosos" },
+              "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "green" } }]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Rechazados" },
+              "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "orange" } }]
+            },
+            {
+              "matcher": { "id": "byName", "options": "Error" },
+              "properties": [{ "id": "color", "value": { "mode": "fixed", "fixedColor": "red" } }]
+            }
+          ]
+        },
+        "options": {
+          "tooltip": { "mode": "multi", "sort": "desc" },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          }
+        }
       }
     ]
   }
