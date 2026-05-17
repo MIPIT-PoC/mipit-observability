@@ -1,0 +1,44 @@
+# P07 — Alert rules (moved from alerting/rules.yaml so they sit in the
+# directory Prometheus loads via `rule_files: /etc/prometheus/rules/*.yaml`).
+# Previously rules were defined but never loaded because prometheus.yml
+# had no `rule_files:` key.
+groups:
+  - name: mipit-alerts
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: sum(rate(mipit_payments_total{status=~"FAILED|REJECTED"}[5m])) / sum(rate(mipit_payments_total[5m])) > 0.01
+        for: 2m
+        labels:
+          severity: warning
+          owner: payments-team
+        annotations:
+          summary: "Error rate superior al 1%"
+          description: "{{ $value | humanizePercentage }} of payments are failing in the last 5m."
+
+      - alert: HighLatency
+        expr: mipit:payment_latency:p95 > 10000
+        for: 3m
+        labels:
+          severity: warning
+          owner: payments-team
+        annotations:
+          summary: "Latencia p95 superior a 10s (instant-payment SLO breach)"
+
+      - alert: AdapterUnreachable
+        expr: up{job=~"adapter-.*"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          owner: payments-team
+        annotations:
+          summary: "Adapter {{ $labels.job }} unreachable"
+
+      - alert: RabbitMQQueueBacklog
+        expr: rabbitmq_queue_messages{queue=~"payments\\.route\\..*"} > 100
+        for: 5m
+        labels:
+          severity: warning
+          owner: payments-team
+        annotations:
+          summary: "Cola {{ $labels.queue }} con más de 100 mensajes pendientes"
