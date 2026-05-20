@@ -1,6 +1,20 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
+  external_labels:
+    monitor: 'mipit-poc'
+
+# P07 — Load alert + recording rules. Previously this key was missing so
+# the rules in `alerting/rules.yaml` were never evaluated by Prometheus.
+rule_files:
+  - /etc/prometheus/rules/*.yaml
+
+# P07 — AlertManager config (deployed as docker service `alertmanager`).
+# Falls back gracefully when service is down.
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
 
 scrape_configs:
   - job_name: 'mipit-core'
@@ -10,19 +24,28 @@ scrape_configs:
         labels:
           service: 'mipit-core'
 
+  # P07 — Adapter metric ports corrected:
+  #   PIX  health  → :9101  (metrics on same port)
+  #   SPEI health  → :9102
+  #   BRE_B health → :9103
+  # Previously PIX+SPEI scraped :9100 (no such port). Bre-B was already correct.
   - job_name: 'adapter-pix'
     metrics_path: /metrics
     static_configs:
-      - targets: ['adapter-pix:9100']
+      - targets: ['adapter-pix:9101']
         labels:
           service: 'mipit-adapter-pix'
+          rail: 'PIX'
+          country: 'BR'
 
   - job_name: 'adapter-spei'
     metrics_path: /metrics
     static_configs:
-      - targets: ['adapter-spei:9100']
+      - targets: ['adapter-spei:9102']
         labels:
           service: 'mipit-adapter-spei'
+          rail: 'SPEI'
+          country: 'MX'
 
   - job_name: 'adapter-breb'
     metrics_path: /metrics
@@ -40,8 +63,11 @@ scrape_configs:
         labels:
           service: 'rabbitmq'
 
-  - job_name: 'postgres-exporter'
-    static_configs:
-      - targets: ['postgres-exporter:9187']
-        labels:
-          service: 'postgres'
+  # P07 — postgres-exporter only scraped when deployed (see compose).
+  # If the service isn't running, prometheus logs a "no such host" but
+  # won't crash. To enable, add postgres-exporter service to compose.
+  # - job_name: 'postgres-exporter'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+  #       labels:
+  #         service: 'postgres'
